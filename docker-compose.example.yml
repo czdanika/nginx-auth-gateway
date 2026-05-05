@@ -1,0 +1,73 @@
+name: strava
+
+services:
+
+  # strava-statistics main app – remove the ports mapping, nginx handles it
+  app:
+    image: robiningelbrecht/strava-statistics:latest
+    container_name: statistics-for-strava
+    restart: unless-stopped
+    # ports: removed – nginx exposes port 80
+    environment:
+      TZ: Europe/Budapest
+      STRAVA_CLIENT_ID: "${STRAVA_CLIENT_ID}"
+      STRAVA_CLIENT_SECRET: "${STRAVA_CLIENT_SECRET}"
+      STRAVA_REFRESH_TOKEN: "${STRAVA_REFRESH_TOKEN}"
+      LOCALE: "hu_HU"
+      UNIT_SYSTEM: "metric"
+    volumes:
+      - ./config:/var/www/config/app
+      - ./build:/var/www/build
+      - ./storage/database:/var/www/storage/database
+      - ./storage/files:/var/www/storage/files
+
+  # strava-statistics background daemon (webhooks, scheduled imports)
+  daemon:
+    image: robiningelbrecht/strava-statistics:latest
+    container_name: statistics-for-strava-daemon
+    restart: unless-stopped
+    command: ["bin/console", "app:daemon:run"]
+    environment:
+      TZ: Europe/Budapest
+      STRAVA_CLIENT_ID: "${STRAVA_CLIENT_ID}"
+      STRAVA_CLIENT_SECRET: "${STRAVA_CLIENT_SECRET}"
+      STRAVA_REFRESH_TOKEN: "${STRAVA_REFRESH_TOKEN}"
+      LOCALE: "hu_HU"
+      UNIT_SYSTEM: "metric"
+    volumes:
+      - ./config:/var/www/config/app
+      - ./build:/var/www/build
+      - ./storage/database:/var/www/storage/database
+      - ./storage/files:/var/www/storage/files
+
+  # Flask authentication service
+  auth:
+    image: python:3.12-alpine
+    container_name: strava-auth
+    restart: unless-stopped
+    working_dir: /app
+    volumes:
+      - ./auth:/app
+      - pip-cache:/root/.cache/pip
+    environment:
+      USERS: "${USERS}"
+      COOKIE_SECRET: "${COOKIE_SECRET}"
+      COOKIE_DAYS: "${COOKIE_DAYS:-30}"
+      APP_BACKEND: "app:8080"
+    command: sh -c "pip install flask --quiet && python app.py"
+
+  # nginx reverse proxy – handles login auth and serves the app
+  nginx:
+    image: nginx:alpine
+    container_name: strava-nginx
+    restart: unless-stopped
+    ports:
+      - "80:80"
+    volumes:
+      - ./auth/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    depends_on:
+      - app
+      - auth
+
+volumes:
+  pip-cache: {}
