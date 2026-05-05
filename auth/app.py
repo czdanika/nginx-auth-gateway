@@ -10,10 +10,37 @@ app = Flask(__name__)
 # Each user can optionally have a backend: "dani:Strava:app:8080"
 # Default backend fallback: APP_BACKEND (default: app:8080)
 
-SECRET      = os.environ.get('COOKIE_SECRET', 'change-this-secret-key')
-COOKIE_NAME = 'strava_auth'
-COOKIE_DAYS = int(os.environ.get('COOKIE_DAYS', '30'))
+SECRET          = os.environ.get('COOKIE_SECRET', 'change-this-secret-key')
+COOKIE_NAME     = 'strava_auth'
+COOKIE_DAYS     = int(os.environ.get('COOKIE_DAYS', '30'))
 DEFAULT_BACKEND = os.environ.get('APP_BACKEND', 'app:8080')
+LANGUAGE        = os.environ.get('LANGUAGE', 'en').lower()
+
+TRANSLATIONS = {
+    'en': {
+        'lang':        'en',
+        'title':       'Strava Statistics',
+        'subtitle':    'Enter your credentials to sign in',
+        'username':    'Username',
+        'password':    'Password',
+        'button':      'Sign in',
+        'error':       'Invalid credentials. Please try again.',
+        'footer':      'Statistics for Strava',
+    },
+    'hu': {
+        'lang':        'hu',
+        'title':       'Strava Statisztikák',
+        'subtitle':    'Add meg az adataidat a belépéshez',
+        'username':    'Felhasználónév',
+        'password':    'Jelszó',
+        'button':      'Belépés',
+        'error':       'Hibás adatok. Próbáld újra.',
+        'footer':      'Statistics for Strava',
+    },
+}
+
+def get_i18n() -> dict:
+    return TRANSLATIONS.get(LANGUAGE, TRANSLATIONS['en'])
 
 
 def load_users() -> dict:
@@ -70,7 +97,7 @@ def verify():
 
 @app.route('/login', methods=['GET'])
 def login():
-    return render_template('login.html', error=False)
+    return render_template('login.html', error=False, i18n=get_i18n())
 
 
 @app.route('/login', methods=['POST'])
@@ -89,7 +116,7 @@ def login_post():
             samesite='Strict',
         )
         return resp
-    return render_template('login.html', error=True), 401
+    return render_template('login.html', error=True, i18n=get_i18n()), 401
 
 
 if __name__ == '__main__':

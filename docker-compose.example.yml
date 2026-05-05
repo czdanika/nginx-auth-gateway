@@ -54,6 +54,7 @@ services:
       COOKIE_SECRET: "${COOKIE_SECRET}"
       COOKIE_DAYS: "${COOKIE_DAYS:-30}"
       APP_BACKEND: "app:8080"
+      LANGUAGE: "${LANGUAGE:-en}"
     command: sh -c "pip install flask --quiet && python app.py"
 
   # nginx reverse proxy – handles login auth and serves the app

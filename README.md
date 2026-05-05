@@ -84,6 +84,7 @@ All configuration lives in `.env`:
 | `COOKIE_SECRET` | Random string for signing cookies — `openssl rand -hex 32` | |
 | `COOKIE_DAYS` | Session length in days | `30` |
 | `APP_BACKEND` | Default backend if not set per-user | `app:8080` |
+| `LANGUAGE` | Login page language: `en` or `hu` | `en` |
 
 ### Multiple users, each with their own strava-statistics container
 
